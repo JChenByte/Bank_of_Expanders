@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="favicon.ico">
+    <title>Earthquake Real Time Visualization</title>
+    <link href="Assets/Bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="Assets/Bootstrap/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <style>
+      body {
+      padding-top: 20px;
+      background-color: black;
+      }
+      .starter-template {
+      padding: 40px 15px;
+      text-align: center;
+      }
+      #earth_div{top: 0; right: 0; bottom: 0; left: 0;position: absolute; !important;}
+    </style>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.css">
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="//www.webglearth.com/v2/api.js"></script>
+    <script>
+      var currentURL;
+      var markerArray =[];
+      var earth;
+      var data;
+      var md5Value;
+
+      /* Remove every markers on the map. */
+      function removeMarker(markerArray){
+        for(i=0;i<markerArray.length;i++){
+          markerArray[i].removeFrom(earth);
+        }
+      }
+
+      /* Send api request to verify MD5 of current data to see if the json data is up to date.
+       * Return 1 if update to date, 0 otherwise.
+       */
+      function checkMD5() {
+        var url;
+
+        switch (currentURL) {
+          case 'api.php/getJson/hour/1':
+            url = 'api.php/checkMD5/1/' + md5Value;
+            break;
+          case 'api.php/getJson/hour/2':
+            url = 'api.php/checkMD5/2/' + md5Value;
+            break;
+          case 'api.php/getJson/hour/3':
+            url = 'api.php/checkMD5/3/' + md5Value;
+            break;
+          case 'api.php/getJson/hour/4':
+            url = 'api.php/checkMD5/4/' + md5Value;
+            break;
+          case 'api.php/getJson/hour/5':
+            url = 'api.php/checkMD5/5/' + md5Value;
+            break;
+          case 'api.php/getJson/day/1':
+            url = 'api.php/checkMD5/6/' + md5Value;
+            break;
+          case 'api.php/getJson/day/2':
+            url = 'api.php/checkMD5/7/' + md5Value;
+            break;
+          case 'api.php/getJson/day/3':
+            url = 'api.php/checkMD5/8/' + md5Value;
+            break;
+          case 'api.php/getJson/day/4':
+            url = 'api.php/checkMD5/9/' + md5Value;
+            break;
+          case 'api.php/getJson/day/5':
+            url = 'api.php/checkMD5/10/' + md5Value;
+            break;
+          case 'api.php/getJson/week/1':
+            url = 'api.php/checkMD5/11/' + md5Value;
+            break;
+          case 'api.php/getJson/week/2':
+            url = 'api.php/checkMD5/12/' + md5Value;
+            break;
+          case 'api.php/getJson/week/3':
+            url = 'api.php/checkMD5/13/' + md5Value;
+            break;
+          case 'api.php/getJson/week/4':
+            url = 'api.php/checkMD5/14/' + md5Value;
+            break;
+          case 'api.php/getJson/week/5':
+            url = 'api.php/checkMD5/15/' + md5Value;
+            break;
+        }
+
+        var returnString;
+
+
+        $.ajax({
+          'async': false,
+          'global': false,
+          'url': url,
+          'dataType': "text",
+          'success': function (adata) {
+            returnString = adata;
+          }
+        });
+
+        // return 1 if returnString is 0, which means it is up to date.
+        if(returnString =="0") {
+          return 1;
+        } else {
+          return 0;
+        }
+
+      }
+
+      /* Update markers on the globe based on json data, and store all markers to markerArray. */
+      function updateMarker(jsonURL, data, markerArray,earth){
+        $.ajax({
+          'async': false,
+          'global': false,
+          'url': jsonURL,
+          'dataType': "json",
+          'success': function (adata) {
+            data = adata;
+          }
+        });
+
+        // Save or update MD5 value of the data.
+        md5Value = CryptoJS.MD5(JSON.stringify(data)).toString();
+
+        if (data){
+          /* mark earthquake on the globe with different icons based on its magnitude. */
+          for (i=0;i<data.length;i++) {
+            var message = 'Name: '+data[i]['name'] + '<br>Address: ' + data[i]['address']+'</span>';
+
+
+              var marker = WE.marker([data[i]['latitude'], data[i]['longitude']], 'mag1.png',19,26).addTo(earth);
+
+
+            // Save marker to the array.
+            markerArray[i] = marker;
+
+            // Display on the globe.
+            marker.bindPopup(message, {maxWidth: 200, closeButton: true});
+          }
+
+        }
+      }
+
+      /* Retrieve a new JSON from the server. */
+      function changeJson(jsonCode) {
+        switch(jsonCode) {
+          case 1:
+            currentURL = 'api.php/getJson/hour/1';
+            break;
+          case 2:
+            currentURL = 'api.php/getJson/hour/2';
+            break;
+          case 3:
+            currentURL = 'api.php/getJson/hour/3';
+          break;
+          case 4:
+            currentURL = 'api.php/getJson/hour/4';
+          break;
+          case 5:
+            currentURL = 'api.php/getJson/hour/5';
+          break;
+          case 6:
+            currentURL = 'api.php/getJson/day/1';
+          break;
+          case 7:
+            currentURL = 'api.php/getJson/day/2';
+          break;
+          case 8:
+            currentURL = 'api.php/getJson/day/3';
+          break;
+          case 9:
+            currentURL = 'api.php/getJson/day/4';
+          break;
+          case 10:
+            currentURL = 'api.php/getJson/day/5';
+          break;
+          case 11:
+            currentURL = 'api.php/getJson/week/1';
+          break;
+          case 12:
+            currentURL = 'api.php/getJson/week/2';
+          break;
+          case 13:
+            currentURL = 'api.php/getJson/week/3';
+          break;
+          case 14:
+            currentURL = 'api.php/getJson/week/4';
+          break;
+          case 15:
+            currentURL = 'api.php/getJson/week/5';
+          break;
+          default:
+              break;
+        }
+
+        removeMarker(markerArray);
+        updateMarker(currentURL,data,markerArray,earth);
+      }
+
+      function initialize() {
+        var options = {
+          sky: true,
+          atmosphere: true,
+          dragging: true,
+          tilting: true,
+          zoom: 5
+        };
+
+
+        /* loaded with options */
+        earth = new WE.map('earth_div', options);
+
+        WE.tileLayer('//data.webglearth.com/natural-earth-color/{z}/{x}/{y}.jpg', {
+            tileSize: 256,
+            bounds: [[-85, -180], [85, 180]],
+            attribution: 'WebGLEarth',
+            minZoom: 0,
+            maxZoom: 8,
+            tms: true
+          }).addTo(earth);
+
+        currentURL = 'https://daemon17.jchenbyte.com/api.php/branch/all';
+        updateMarker(currentURL,data,markerArray,earth);
+
+
+        earth.setView([38, -96], 3.8);
+
+
+
+        /* Rotate the earth. */
+        var before = null;
+        requestAnimationFrame(function animate(now) {
+          var c = earth.getPosition();
+          var elapsed = before? now - before: 0;
+          before = now;
+          earth.setCenter([c[0], c[1] + 0.1*(elapsed/180)]);
+          // requestAnimationFrame(animate);
+        });
+
+        /* Send MD5 verification request every 10 seconds. Update markers if necessary. */
+        // setInterval(function(){
+        //   if (checkMD5() == 0) {
+        //     removeMarker(markerArray);
+        //     updateMarker(currentURL, data,markerArray,earth);
+        //   }
+        // }, 10000);
+
+      }
+
+    </script>
+  </head>
+  <body onload="initialize()">
+
+    <div class="container-fluid" >
+
+      <div class="starter-template">
+        <div id="earth_div" style="height:auto;"></div>
+      </div>
+    </div>
+    <!-- /.container -->
+    <script src="Assets\CryptoJS\rollups\md5.js"></script>
+    <script src="Assets/jquery-3.1.1.min.js"></script>
+    <script>window.jQuery || document.write('<script src="Assets/Bootstrap/js/vendor/jquery.min.js"><\/script>')</script>
+    <script src="Assets/Bootstrap/js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="Assets/Bootstrap/js/ie10-viewport-bug-workaround.js"></script>
+  </body>
+</html>
